@@ -15,130 +15,96 @@ router.post("/", async (req, res) => {
 });
 
 // READ all users
-// router.get('/', async (req, res) => {
-//   console.log('GET /users called');
-//   try {
-//     console.log('inside try');
-
-//     const dbStatus = mongoose.connection.readyState;
-//     console.log('MongoDB connection status:', dbStatus);
-
-//     const users = await User.find();
-//     console.log('found users');
-//     res.status(200).json(users);
-//   } catch (err) {
-//     console.error('Error:', err);
-//     res.status(500).json({ error: err.message });
-//   }
-// });
-
 router.get("/", async (req, res) => {
-  console.log("inside try");
-  // res.status(200).json({ message: 'OK', data: [] });
-  // query = {};
-  // try {
-  //   const users = await User.countDocuments(query);
-  //   response.data = users;
-  //   return res.status(200).json(response); // Return response with count and no documents
-  // } catch (error) {
-  //   console.error("Error fetching total count:", error);
-  //   return res
-  //     .status(500)
-  //     .json({ message: "Error fetching total count", data: null });
-  // }
-
   try {
-    console.log('inside try');
-    let query = {};
-
-    console.log('Executing query:', query);
-    const users = await User.find(query).maxTimeMS(30000);;
-    console.log('Found users:', users);
-
+    console.log("Fetching all users...");
+    const users = await User.find().maxTimeMS(30000);
+    console.log("Users retrieved:", users);
     res.status(200).json({
-      message: 'OK',
+      message: "OK",
       data: {
-        users: users
-      }
+        users,
+      },
     });
-
   } catch (error) {
     console.error("Error fetching users:", error);
     res.status(500).json({
-      message: 'Server error',
+      message: "Server error",
       error: error.message,
-      stack: error.stack // This will provide more information about where the error occurs
     });
   }
 });
 
-// READ a specific user by ID
-router.get("/:id", async (req, res) => {
-  console.log("GET /users id called");
+// READ a specific user by email
+router.get("/:email", async (req, res) => {
+  console.log(`GET /users/${req.params.email} called`);
   try {
-    console.log("inside try");
-    const user = await User.findById(req.params.id);
-    console.log("found user");
-    if (!user) return res.status(404).json({ error: "User not found" });
+    const user = await User.findOne({ email: req.params.email });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
     res.status(200).json(user);
   } catch (err) {
+    console.error("Error fetching user:", err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// UPDATE a user's email or add optimization history
-
-router.put("/:id", async (req, res) => {
-    try {
-      const user = await User.findById(req.params.id);
-  
-      if (!user) {
-        return res.status(404).json({ error: "User not found" });
-      }
-  
-      // Update the user's email if provided
-      if (req.body.email) {
-        user.email = req.body.email;
-      }
-      if (req.body.username) {
-        user.username = req.body.username;
-      }
-  
-      // Add a new optimization record if it's explicitly provided in the request
-      if (req.body.optimizationHistory) {
-        const newOptimizationRecord = req.body.optimizationHistory;
-  
-        // Ensure the provided record contains at least one meaningful field
-        if (
-          newOptimizationRecord.fileName || 
-          newOptimizationRecord.code || 
-          newOptimizationRecord.score
-        ) {
-          user.optimizationHistory.push(newOptimizationRecord);
-        } else {
-          return res.status(400).json({
-            error: "Invalid optimization record. Must include fileName, code, or score.",
-          });
-        }
-      }
-  
-      // Save updated user data
-      const updatedUser = await user.save();
-      res.status(200).json(updatedUser);
-  
-    } catch (err) {
-      res.status(400).json({ error: err.message });
-    }
-});
-  
-
-// DELETE a user by ID
-router.delete("/:id", async (req, res) => {
+// UPDATE a user's email, username, or add optimization history
+router.put("/:email", async (req, res) => {
   try {
-    const deletedUser = await User.findByIdAndDelete(req.params.id);
-    if (!deletedUser) return res.status(404).json({ error: "User not found" });
+    const email = req.params.email;
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Update the user's email and username if provided
+    if (req.body.email) {
+      user.email = req.body.email;
+    }
+    if (req.body.username) {
+      user.username = req.body.username;
+    }
+
+    // Add a new optimization record if provided
+    if (req.body.optimizationHistory) {
+      const newOptimizationRecord = req.body.optimizationHistory;
+
+      // Ensure the provided record contains valid fields
+      if (
+        newOptimizationRecord.fileName ||
+        newOptimizationRecord.code ||
+        newOptimizationRecord.score
+      ) {
+        user.optimizationHistory.push(newOptimizationRecord);
+      } else {
+        return res.status(400).json({
+          error: "Invalid optimization record. Must include fileName, code, or score.",
+        });
+      }
+    }
+
+    // Save updated user data
+    const updatedUser = await user.save();
+    res.status(200).json(updatedUser);
+  } catch (err) {
+    console.error("Error updating user:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE a user by email
+router.delete("/:email", async (req, res) => {
+  try {
+    const deletedUser = await User.findOneAndDelete({ email: req.params.email });
+    if (!deletedUser) {
+      return res.status(404).json({ error: "User not found" });
+    }
     res.status(200).json({ message: "User deleted successfully" });
   } catch (err) {
+    console.error("Error deleting user:", err);
     res.status(500).json({ error: err.message });
   }
 });
