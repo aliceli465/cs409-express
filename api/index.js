@@ -1,49 +1,56 @@
-// module.exports = function (app, router) {
-//     // Load the home route (this will be accessible at /api)
-//     app.use('/api', require('./home.js'));
-
-//     // Load the users route (this will be accessible at /api/users)
-//     app.use('/api/users', require('./userRoutes.js'));
-
-//     // Load the tasks route (this will be accessible at /api/tasks)
-//     app.use('/api/tasks', require('./taskRoutes.js'));
-//   };
-
-// module.exports = function (app) {
-//     // Register the test route
-//     // app.post('/api/users/test-indirect', (req, res) => {
-//     //   console.log('POST /api/users/test-indirect route called from index.js');
-//     //   res.status(200).json({ message: 'Indirect route test OK' });
-//     // });
-
-//     console.log('Registering /api/users and /api/tasks routes');
-//     // Register other routes as needed
-//     app.use('/api', require('./home.js'));
-//     app.use('/api/users', require('./userRoutes.js'));
-//     // app.use('/api/tasks', require('./taskRoutes.js'));
-//   };
-//const userRoutes = require("./userRoutes");
-
-//alice code below
+import express from "express";
+import mongoose from "mongoose";
 import cors from "cors";
+import dotenv from "dotenv";
+import userRoutes from "./userRoutes.js"; // Import your user routes
 
-const express = require("express");
+dotenv.config(); // Load environment variables
+
 const app = express();
+const port = process.env.PORT || 5051;
+const mongoURI = process.env.ATLAS_URI || ""; // Mongo URI from .env
 
-app.use(
-  cors({
-    origin: "*", // Allow requests from any origin
-  })
-);
+// Middleware
+app.use(cors({ origin: "*" }));
+app.use(express.json()); // For parsing JSON payloads
 
-app.use(express.json());
-// Register the home route
-app.use("/api", require("./home.js")());
+// Database connection function
+async function connectToDB() {
+  try {
+    await mongoose.connect(mongoURI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      serverSelectionTimeoutMS: 30000, // Timeout for MongoDB connection
+    });
+    console.log("MongoDB connection successful");
+  } catch (err) {
+    console.error("MongoDB connection error:", err);
+    process.exit(1); // Exit the process if DB connection fails
+  }
+}
 
-// Register the user routes
-app.use("/api/users", require("./userRoutes.js"));
-app.get("/", (req, res) => res.send("409 server lebron jamesss"));
+// Routes
+app.use("/api/users", userRoutes); // Register user routes
 
-app.listen(5051, () => console.log("Server ready on port 5151."));
+// Home route
+app.get("/", (req, res) => {
+  res.send("409 server lebron jamesss");
+});
 
-module.exports = app;
+// Start the server after DB connection
+connectToDB().then(() => {
+  app.listen(port, () => {
+    console.log(`Server running on port ${port}`);
+  });
+});
+
+// 404 handler for unknown routes
+app.get("*", (req, res) => {
+  res.status(404).json({ message: "Route not found!" });
+});
+
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ message: "Something went wrong!", error: err });
+});
