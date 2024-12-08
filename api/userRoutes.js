@@ -51,6 +51,7 @@ router.get("/:email", async (req, res) => {
 });
 
 // UPDATE a user's email, username, or add optimization history
+// UPDATE a user's email, username, or add optimization history
 router.put("/:email", async (req, res) => {
   try {
     const email = req.params.email;
@@ -70,20 +71,28 @@ router.put("/:email", async (req, res) => {
 
     // Add a new optimization record if provided
     if (req.body.optimizationHistory) {
-      const newOptimizationRecord = req.body.optimizationHistory;
+      let optimizationHistory = req.body.optimizationHistory;
 
-      // Ensure the provided record contains valid fields
-      if (
-        newOptimizationRecord.fileName ||
-        newOptimizationRecord.code ||
-        newOptimizationRecord.score
-      ) {
-        user.optimizationHistory.push(newOptimizationRecord);
-      } else {
-        return res.status(400).json({
-          error: "Invalid optimization record. Must include fileName, code, or score.",
-        });
+      // Ensure optimizationHistory is always an array, even if it's a single object
+      if (!Array.isArray(optimizationHistory)) {
+        optimizationHistory = [optimizationHistory]; // Wrap single object into an array
       }
+
+      // Validate each optimization record
+      optimizationHistory.forEach((record) => {
+        if (!record.fileName && !record.code && !record.score) {
+          console.error("Invalid optimization record:", record);
+          throw new Error("Invalid optimization record. Must include fileName, code, or score.");
+        }
+      });
+
+      // If the user doesn't have an optimizationHistory array, initialize it
+      if (!user.optimizationHistory) {
+        user.optimizationHistory = [];
+      }
+
+      // Push all the records into the optimizationHistory array
+      user.optimizationHistory.push(...optimizationHistory);
     }
 
     // Save updated user data
@@ -94,6 +103,7 @@ router.put("/:email", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
 
 // DELETE a user by email
 router.delete("/:email", async (req, res) => {
