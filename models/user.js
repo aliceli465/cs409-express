@@ -6,7 +6,7 @@ const OptimizationHistorySchema = new mongoose.Schema({
   code: { type: String},    // The optimized code
   score: { type: Number},   // Optimization score
   date: { type: Date, default: Date.now }    // Timestamp of the optimization
-});
+},{ _id: false });
 
 // Define the User schema
 const UserSchema = new mongoose.Schema({
