@@ -88,23 +88,49 @@ router.get("/:id", async (req, res) => {
 
 // UPDATE a user's email or add optimization history
 router.put("/:id", async (req, res) => {
-  try {
-    const user = await User.findById(req.params.id);
-    if (!user) return res.status(404).json({ error: "User not found" });
-
-    // Update the user's details
-    if (req.body.email) user.email = req.body.email;
-
-    // Add a new optimization record if provided
-    if (req.body.optimizationHistory) {
-      user.optimizationHistory.push(req.body.optimizationHistory);
+  router.put("/:id", async (req, res) => {
+    try {
+      const user = await User.findById(req.params.id);
+  
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+  
+      // Update the user's email if provided
+      if (req.body.email) {
+        user.email = req.body.email;
+      }
+      if (req.body.username) {
+        user.username = req.body.username;
+      }
+  
+      // Add a new optimization record if it's explicitly provided in the request
+      if (req.body.optimizationHistory) {
+        const newOptimizationRecord = req.body.optimizationHistory;
+  
+        // Ensure the provided record contains at least one meaningful field
+        if (
+          newOptimizationRecord.fileName || 
+          newOptimizationRecord.code || 
+          newOptimizationRecord.score
+        ) {
+          user.optimizationHistory.push(newOptimizationRecord);
+        } else {
+          return res.status(400).json({
+            error: "Invalid optimization record. Must include fileName, code, or score.",
+          });
+        }
+      }
+  
+      // Save updated user data
+      const updatedUser = await user.save();
+      res.status(200).json(updatedUser);
+  
+    } catch (err) {
+      res.status(400).json({ error: err.message });
     }
-
-    const updatedUser = await user.save();
-    res.status(200).json(updatedUser);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
+  });
+  
 });
 
 // DELETE a user by ID
