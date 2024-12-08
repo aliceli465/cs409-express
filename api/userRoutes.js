@@ -35,41 +35,41 @@ router.post("/", async (req, res) => {
 router.get("/", async (req, res) => {
   console.log("inside try");
   // res.status(200).json({ message: 'OK', data: [] });
-  query = {};
-  try {
-    const users = await User.countDocuments(query);
-    response.data = users;
-    return res.status(200).json(response); // Return response with count and no documents
-  } catch (error) {
-    console.error("Error fetching total count:", error);
-    return res
-      .status(500)
-      .json({ message: "Error fetching total count", data: null });
-  }
-
+  // query = {};
   // try {
-  //   console.log('inside try');
-  //   let query = {};
-
-  //   console.log('Executing query:', query);
-  //   const users = await User.find(query).maxTimeMS(30000);;
-  //   console.log('Found users:', users);
-
-  //   res.status(200).json({
-  //     message: 'OK',
-  //     data: {
-  //       users: users
-  //     }
-  //   });
-
+  //   const users = await User.countDocuments(query);
+  //   response.data = users;
+  //   return res.status(200).json(response); // Return response with count and no documents
   // } catch (error) {
-  //   console.error("Error fetching users:", error);
-  //   res.status(500).json({
-  //     message: 'Server error',
-  //     error: error.message,
-  //     stack: error.stack // This will provide more information about where the error occurs
-  //   });
+  //   console.error("Error fetching total count:", error);
+  //   return res
+  //     .status(500)
+  //     .json({ message: "Error fetching total count", data: null });
   // }
+
+  try {
+    console.log('inside try');
+    let query = {};
+
+    console.log('Executing query:', query);
+    const users = await User.find(query).maxTimeMS(30000);;
+    console.log('Found users:', users);
+
+    res.status(200).json({
+      message: 'OK',
+      data: {
+        users: users
+      }
+    });
+
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    res.status(500).json({
+      message: 'Server error',
+      error: error.message,
+      stack: error.stack // This will provide more information about where the error occurs
+    });
+  }
 });
 
 // READ a specific user by ID
