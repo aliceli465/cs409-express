@@ -87,8 +87,8 @@ router.get("/:id", async (req, res) => {
 });
 
 // UPDATE a user's email or add optimization history
+
 router.put("/:id", async (req, res) => {
-  router.put("/:id", async (req, res) => {
     try {
       const user = await User.findById(req.params.id);
   
@@ -129,9 +129,8 @@ router.put("/:id", async (req, res) => {
     } catch (err) {
       res.status(400).json({ error: err.message });
     }
-  });
-  
 });
+  
 
 // DELETE a user by ID
 router.delete("/:id", async (req, res) => {
