@@ -55,10 +55,27 @@ router.get("/:email", async (req, res) => {
 router.put("/:email", async (req, res) => {
   try {
     const email = req.params.email;
-    const user = await User.findOne({ email });
+    let user = await User.findOne({ email });
 
+    //create new user instead
     if (!user) {
-      return res.status(404).json({ error: "User not found" });
+      console.log(`User with email ${email} not found. Creating a new user.`);
+      const { username, optimizationHistory } = req.body;
+      if (!username) {
+        return res
+          .status(400)
+          .json({ error: "Username is required to create a new user." });
+      }
+      user = new User({
+        email,
+        username,
+        optimizationHistory: Array.isArray(optimizationHistory)
+          ? optimizationHistory
+          : [],
+      });
+
+      await user.save();
+      return res.status(201).json(user);
     }
 
     // Update the user's email and username if provided
@@ -82,7 +99,9 @@ router.put("/:email", async (req, res) => {
       optimizationHistory.forEach((record) => {
         if (!record.fileName && !record.code && !record.score) {
           console.error("Invalid optimization record:", record);
-          throw new Error("Invalid optimization record. Must include fileName, code, or score.");
+          throw new Error(
+            "Invalid optimization record. Must include fileName, code, or score."
+          );
         }
       });
 
@@ -104,11 +123,12 @@ router.put("/:email", async (req, res) => {
   }
 });
 
-
 // DELETE a user by email
 router.delete("/:email", async (req, res) => {
   try {
-    const deletedUser = await User.findOneAndDelete({ email: req.params.email });
+    const deletedUser = await User.findOneAndDelete({
+      email: req.params.email,
+    });
     if (!deletedUser) {
       return res.status(404).json({ error: "User not found" });
     }
